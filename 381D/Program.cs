@@ -10,6 +10,7 @@ namespace _381D
     {
         static void Main(string[] args)
         {
+
         }
     }
 }
