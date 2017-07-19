@@ -15,115 +15,86 @@ namespace _381D
             int PeopleCount = Convert.ToInt32(Input[0]); // Количество людей
             int KeysCount = Convert.ToInt32(Input[1]); // Количество Ключей
             int OfficePosition = Convert.ToInt32(Input[2]); // Положение офиса
+            //int PeopleCount = 40; // Количество людей
+            //int KeysCount = 45; // Количество Ключей
+            //int OfficePosition = 1000; // Положение офиса
+
 
             // Генератор случайных чисел
-            //Random Rnd = new Random();
+            Random Rnd = new Random();
 
             // Заполнение положения людей
+            //string Input1 = "6 55 34 32 20 76 2 84 47 68 31 60 14 70 99 72 21 61 81 79 26 51 96 86 10 1 43 69 87 78 13 11 80 67 50 52 9 29 94 12";
             string[] PeopleInput = Console.ReadLine().Split(' ');
-            int[] AllPeoples = new int[PeopleCount];
-            for (int i = 0; i < PeopleCount; i++) { AllPeoples[i] = Convert.ToInt32(PeopleInput[i]); }
-            //for (int i = 0; i < PeopleCount; i++) { AllPeoples[i] = Rnd.Next(1,1000000001); }
+            //string[] PeopleInput = Input1.Split(' ');
+            List<Positon> AllPeoples = new List<Positon>();
+            for (int i = 0; i < PeopleCount; i++) { AllPeoples.Add(new Positon(Convert.ToInt32(PeopleInput[i]),OfficePosition)); }
+            //for (int i = 0; i < PeopleCount; i++) { AllPeoples.Add(new Positon(Rnd.Next(1,1000000001),OfficePosition)); }
 
             // Заполнение положения ключей
+            //string Input2 = "1974 1232 234 28 1456 626 408 1086 1525 1209 1096 940 795 1867 548 1774 1993 1199 1112 1087 1923 1156 876 1715 1815 1027 1658 955 398 910 620 1164 749 996 113 109 500 328 800 826 766 518 1474 1038 1029";
             string[] KeysInput= Console.ReadLine().Split(' ');
-            List<KeyPositon> AllKeys = new List<KeyPositon>();
-            for(int i=0; i<KeysCount; i++) { AllKeys.Add(new KeyPositon(Convert.ToInt32(KeysInput[i]), OfficePosition)); }
-            //for (int i = 0; i < KeysCount; i++) { AllKeys.Add(new KeyPositon(Rnd.Next(1,1000000001), OfficePosition)); }
+            //string[] KeysInput = Input2.Split(' ');
+            List<Positon> AllKeys = new List<Positon>();
+            for(int i=0; i<KeysCount; i++) { AllKeys.Add(new Positon(Convert.ToInt32(KeysInput[i]), OfficePosition)); }
+            //for (int i = 0; i < KeysCount; i++) { AllKeys.Add(new Positon(Rnd.Next(1,1000000001), OfficePosition)); }
 
             // Запускаем таймер тестировпния
             //Stopwatch Timer = new Stopwatch();
             //Timer.Start();
             //Console.WriteLine("Старт");
 
-            // Сортируем ключи по удалению от офиса
-            AllKeys.Sort();
+            // Сортируем людей по удалению от офиса
+            AllPeoples.Sort();
 
-            // Составляем матрицу всех растояний
-            List<FromManToKey> MyList=new List<FromManToKey>();
-            for (int i =0; i<PeopleCount; i++)
+            // Пока все люди не уйдут в офис
+            int MaxPath = 0;
+            foreach(Positon CurMan in AllPeoples )
             {
-                for(int j=0;j<PeopleCount; j++)
+                int CurMinPath = 1000000000;
+                Positon KeyToTake = null;
+                foreach (Positon CurKey in AllKeys)
                 {
-                    MyList.Add(new FromManToKey(i, AllPeoples[i], AllKeys[j]));
+                    int CurPath = Math.Abs(CurKey.Position - CurMan.Position) + CurKey.PathLenth;
+                    if (CurPath<CurMinPath)
+                    {
+                        CurMinPath = CurPath;
+                        KeyToTake = CurKey;
+                    }
                 }
-            }
-            MyList.Sort(); // Сортируем по возрастанию пути
-            //Console.WriteLine("Матрица составлена за: {0} мс.", Timer.ElapsedMilliseconds);
-
-            int MaxFulPath=0;
-            bool[] ManInOffice = new bool[PeopleCount];
-            int PeopleInOffice = 0;
-            foreach(FromManToKey CurMan in MyList)
-            {
-                if (!ManInOffice[CurMan.Man])
-                {
-                    PeopleInOffice++;
-                    ManInOffice[CurMan.Man] = true;
-                    MaxFulPath = CurMan.Path;
-                }
-                if (PeopleInOffice == PeopleCount) { break; }
+                MaxPath = Math.Max(MaxPath, CurMinPath);
+                AllKeys.Remove(KeyToTake);
             }
             
-            
-            Console.WriteLine(MaxFulPath);
-            //Console.WriteLine("Ответ: {0}. Найден за {1} мс.", MaxFulPath, Timer.ElapsedMilliseconds);
+            Console.WriteLine(MaxPath);
+            //Console.WriteLine("Ответ: {0}. Найден за {1} мс.", MaxPath, Timer.ElapsedMilliseconds);
             //Console.ReadKey();
 
         }
     }
 
-    public class KeyPositon : IComparable<KeyPositon>
+    public class Positon : IComparable<Positon>
     {
         public int Position { get; set; }
-        private int officeLenth;
-        public int OfficeLenth
+        private int pathLenth;
+        public int PathLenth
         {
-            get { return officeLenth; }
+            get { return pathLenth; }
         }
-        public KeyPositon(int Pos, int OfficePos)
+
+        public Positon(int Pos, int OfficePos)
         {
             Position = Pos;
-            officeLenth = Math.Abs(OfficePos - Position);
+            pathLenth = Math.Abs(OfficePos - Position);
         }
-
-        public int CompareTo(KeyPositon other)
+        
+        public int CompareTo(Positon other)
         {
             if (other == null)
                 return 1;
 
             else
-                return this.OfficeLenth.CompareTo(other.OfficeLenth);
-        }
-    }
-
-    public class FromManToKey :IComparable<FromManToKey>
-    {
-        public int Man { get; set; }
-        public int ManPosition { get; set; }
-        public KeyPositon Key { get; set; }
-
-        private int path;
-        public int Path
-        {
-            get { return path; }
-        }
-
-        public FromManToKey(int man, int manPosition, KeyPositon key)
-        {
-            Man = man;
-            ManPosition = manPosition;
-            Key = key;
-            path = Math.Abs(Key.Position - ManPosition) + Key.OfficeLenth;
-        }
-
-        public int CompareTo(FromManToKey other)
-        {
-            if (other == null)
-                return 1;
-
-            else
-                return this.Path.CompareTo(other.Path);
+                return -this.PathLenth.CompareTo(other.PathLenth);
         }
     }
 }
